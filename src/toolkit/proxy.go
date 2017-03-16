@@ -3,6 +3,7 @@ package toolkit
 import (
 	"helpers"
 
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -11,8 +12,49 @@ import (
 	"time"
 )
 
+func SetupProxy(proxies []ProxyConfig) {
+	for _, p := range proxies {
+		ec := NewEventsContainer()
+		events[p.Name] = ec
+		log.Printf("Proxying to %v", p.To)
+
+		targetURL, err := url.Parse(p.To)
+		if err != nil {
+			panic(err)
+		}
+		r := http.NewServeMux()
+		r.Handle("/", ProxyHandler(targetURL, ec))
+		srv := &http.Server{
+			Handler: r,
+			Addr:    p.Endpoint,
+			// Good practice: enforce timeouts for servers you create!
+			WriteTimeout: 15 * time.Second,
+			ReadTimeout:  15 * time.Second,
+		}
+
+		log.Printf("Proxy is Listening on %v", p.Endpoint)
+		go func() { log.Fatal(srv.ListenAndServe()) }()
+	}
+}
+
+func ProxyHandler(targetURL *url.URL, ec *EventsContainer) http.Handler {
+	targetQuery := targetURL.RawQuery
+	director := func(req *http.Request) {
+		req.URL.Scheme = targetURL.Scheme
+		req.URL.Host = targetURL.Host
+		req.URL.Path = singleJoiningSlash(targetURL.Path, req.URL.Path)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+	}
+	return &httputil.ReverseProxy{Director: director, Transport: getDefaultTransport(ec)}
+}
+
 type ProxyTransport struct {
 	*http.Transport
+	ec *EventsContainer
 }
 
 func (p *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -35,36 +77,24 @@ func (p *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	e := &Event{URL: req.URL.String(), Method: req.Method, Req: reqBytes, Resp: respBytes, RespBody: respBodyBytes}
 	e.SetUUID()
-	ec.AddEvent(req, e)
+	p.ec.AddEvent(req, e)
 
 	return resp, nil
 }
 
-func ProxyHandler(targetURL *url.URL) http.Handler {
-	targetQuery := targetURL.RawQuery
-	director := func(req *http.Request) {
-		req.URL.Scheme = targetURL.Scheme
-		req.URL.Host = targetURL.Host
-		req.URL.Path = singleJoiningSlash(targetURL.Path, req.URL.Path)
-		if targetQuery == "" || req.URL.RawQuery == "" {
-			req.URL.RawQuery = targetQuery + req.URL.RawQuery
-		} else {
-			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
-		}
+func getDefaultTransport(ec *EventsContainer) http.RoundTripper {
+	return &ProxyTransport{
+		&http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   300 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 10 * time.Second,
+			// ExpectContinueTimeout: 2 * time.Second, // only go 1.6
+		},
+		ec,
 	}
-	return &httputil.ReverseProxy{Director: director, Transport: getDefaultTransport()}
-}
-
-func getDefaultTransport() http.RoundTripper {
-	return &ProxyTransport{&http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   300 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
-		// ExpectContinueTimeout: 2 * time.Second, // only go 1.6
-	}}
 }
 
 func singleJoiningSlash(a, b string) string {

@@ -1,7 +1,7 @@
 export GOPATH=${CURDIR}
 
 app:
-	go install cmds/proto
+	go install cmds/api-toolkit
 
 prepare:
 	go get github.com/jteeuwen/go-bindata/...

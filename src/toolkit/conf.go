@@ -1,16 +1,12 @@
 package toolkit
 
-type Conf struct {
-	Api     Endpoint
-	Proxies Proxy
+type Config struct {
+	Api     string
+	Proxies []ProxyConfig
 }
 
-type Proxy struct {
-	From Endpoint
-	To   Endpoint
-}
-
-type Endpoint struct {
-	Bind string
-	Port string
+type ProxyConfig struct {
+	Name     string
+	Endpoint string
+	To       string
 }
