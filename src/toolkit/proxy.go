@@ -75,7 +75,7 @@ func (p *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		panic(err)
 	}
-	e := &Event{URL: req.URL.String(), Method: req.Method, Req: reqBytes, Resp: respBytes, RespBody: respBodyBytes}
+	e := &Event{URL: req.URL.String(), Method: req.Method, Req: reqBytes, Resp: respBytes, RespBody: respBodyBytes, RespCode: resp.StatusCode}
 	e.SetUUID()
 	p.ec.AddEvent(req, e)
 

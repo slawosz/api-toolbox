@@ -17,6 +17,7 @@ import (
 type Event struct {
 	URL      string
 	Method   string
+	RespCode int
 	Req      []byte
 	Resp     []byte
 	RespBody []byte

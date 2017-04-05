@@ -23,40 +23,48 @@ $(function() {
           // prepare divs for events
           $('#events').append('<div class="' + proxies[idx] + '"></div>');
           $('#navs ul').append('<li role="presentation"><a href="#">' + proxies[idx] + '</a></li>');
+          $('#navs ul li:last-of-type').click(function(e) {
+            $('#navs ul li').removeClass('active');
+            $(this).addClass('active');
+            $('#events div').not('.' + proxies[idx]).hide();
+            $('#events div').not('.' + proxies[idx]).removeClass('active');
+            $('#events div' + '.' + proxies[idx]).show();
+          });
           getEvents(proxies[idx], $.parseJSON(msg).EventsList);
+          if (i == proxies.length) {
+            $('#events div').hide();
+            $('#events div:first-of-type').show();
+            $('#navs ul li:first-of-type').addClass('active');
+          }
         });
       })(i);
     }
   });
 
   var getEvents = function(name, events) {
-    console.log(events);
     var tpl = $("#tpl-events").html();
     var table = $("#tpl-events-table").html();
     $('#events .' + name).append($(_.template(table)()))
-    console.log(events.length);
     for(var i= 0; i < events.length; i++) {
       var event = events[i];
-      console.log(event);
       (function(ev){
-        console.log(event);
         var $a = $('<a href="#" class=\'btn btn-default\'>Show details</a>')
         var $ev = $(_.template(tpl)({"Event":ev}))
         $a.click(function(e) {
           e.preventDefault();
-          $('#request pre').html(atob(ev['Req']));
+          $('#request xmp').html(atob(ev['Req']));
           $('#response .headers pre').html(atob(ev['Resp']));
           //$('#response .body pre').html(atob(event['RespBody']));
-          var json = atob(ev['RespBody'])
           try {
+            var json = atob(ev['RespBody'])
+            JSON.parse(json) // trick for exception
             $('#response .body').jsonbrowser(json, {'collapsed': true});
           } catch (e) {
-            $('#response .body').html('<pre>' + json + '</pre>');
+            $('#response .body').html('<xmp>' + atob(ev['RespBody']) + '</xmp>');
           }
           $("#myModal").modal('show')
         })
         $ev.find('td:last').append($a);
-        console.log($('#events .' + name + ' tbody'));
         $('#events .' + name + ' tbody').append($ev);
       })(event)
     }
