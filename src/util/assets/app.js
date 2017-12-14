@@ -3,8 +3,6 @@ $(function() {
   $.ajax({
     method: "POST",
     url: "/proxies",
-    //dataType: "json",
-    //data: JSON.stringify(data),
   })
   .done(function(msg) {
     proxies = $.parseJSON(msg);
@@ -14,8 +12,6 @@ $(function() {
         $.ajax({
           method: "POST",
           url: "/api/" + proxies[i],
-          //dataType: "json",
-          //data: JSON.stringify(data),
         })
         .done(function(msg) {
           $('#browser').jsonbrowser(msg, {'collapsed': true});

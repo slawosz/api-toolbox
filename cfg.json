@@ -1,0 +1,17 @@
+{
+  "Api": "localhost:8080",
+  "Proxies": [
+    {
+      "Name": "First",
+      "Endpoint": "localhost:4000",
+      "To": "http://localhost:5000"
+    },
+    {
+      "Name": "Second",
+      "Endpoint": "localhost:4001",
+      "To": "http://localhost:5001"
+    }
+
+  ]
+}
+

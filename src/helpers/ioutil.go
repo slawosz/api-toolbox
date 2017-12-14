@@ -7,6 +7,7 @@ package helpers
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -298,7 +299,15 @@ func DumpResponseBody(resp *http.Response) (dump []byte, err error) {
 			return
 		}
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	var br io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		br, err = gzip.NewReader(resp.Body)
+		defer br.Close()
+	default:
+		br = resp.Body
+	}
+	body, _ := ioutil.ReadAll(br)
 	if err != nil {
 		return nil, err
 	}

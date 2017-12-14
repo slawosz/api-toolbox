@@ -5,6 +5,10 @@ Helps to understand json api
 # Running
 
 ```shell
+./bin/api-toolkit -cfgFile=cfg.json
+```
+# TODO
+```shell
 api-booster -port=4000 -api-port=4001
 ```
 
