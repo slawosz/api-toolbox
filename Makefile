@@ -6,6 +6,8 @@ app:
 prepare:
 	go get github.com/jteeuwen/go-bindata/...
 	go get github.com/elazarl/go-bindata-assetfs/...
+	#go get github.com/kr/text
+	go get github.com/kr/pretty
 
 install: assets
 		# go install cmds/ssh-execute
