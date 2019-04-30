@@ -42,6 +42,7 @@ func ProxyHandler(targetURL *url.URL, ec *EventsContainer) http.Handler {
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
+		req.Host = targetURL.Host
 		req.URL.Path = singleJoiningSlash(targetURL.Path, req.URL.Path)
 		if targetQuery == "" || req.URL.RawQuery == "" {
 			req.URL.RawQuery = targetQuery + req.URL.RawQuery
